@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>온도주권</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#FBF6FF;
+    --bg-2:#EFE7FB;
+    --card:#FFFFFF;
+    --ink:#4A4458;
+    --ink-soft:#8A8098;
+    --cold:#8FD4EE;
+    --cold-soft:#DFF4FC;
+    --mild:#8BDDB0;
+    --mild-soft:#E0F8EC;
+    --hot:#FF9E86;
+    --hot-soft:#FFE6DF;
+    --accent:#FFC857;
+    --accent-soft:#FFF3D6;
+    --shadow: 0 10px 26px rgba(122, 98, 163, 0.16);
+    --shadow-sm: 0 4px 12px rgba(122, 98, 163, 0.14);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg-1:#221E2C;
+      --bg-2:#2B2536;
+      --card:#332C40;
+      --ink:#F3EEFA;
+      --ink-soft:#B7AEC7;
+      --cold-soft:#25404B;
+      --mild-soft:#22402F;
+      --hot-soft:#472F2A;
+      --accent-soft:#463A22;
+      --shadow: 0 10px 26px rgba(0,0,0,0.35);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg-1:#221E2C;
+    --bg-2:#2B2536;
+    --card:#332C40;
+    --ink:#F3EEFA;
+    --ink-soft:#B7AEC7;
+    --cold-soft:#25404B;
+    --mild-soft:#22402F;
+    --hot-soft:#472F2A;
+    --accent-soft:#463A22;
+    --shadow: 0 10px 26px rgba(0,0,0,0.35);
+    --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    min-height:100vh;
+    background: radial-gradient(circle at 15% 0%, var(--bg-2), var(--bg-1) 55%);
+    color: var(--ink);
+    font-family: 'Gowun Dodum', -apple-system, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding: 28px 16px 60px;
+  }
+  .headline-font{ font-family: 'Jua', 'Gowun Dodum', sans-serif; }
+
+  .app{
+    width:100%;
+    max-width: 640px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+  header h1{
+    font-family: 'Jua', sans-serif;
+    font-weight:400;
+    font-size: clamp(28px, 6vw, 38px);
+    margin: 0 0 6px;
+    letter-spacing: 0.5px;
+  }
+  header p{
+    margin:0;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  /* Mascot card */
+  .mascot-card{
+    background: var(--card);
+    border-radius: 32px;
+    box-shadow: var(--shadow);
+    padding: 26px 24px 22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 22px;
+    position:relative;
+    overflow:hidden;
+    transition: background 0.4s ease;
+  }
+  .mascot-glow{
+    position:absolute;
+    inset: -40% -40% auto -40%;
+    height: 220px;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.5;
+    transition: background 0.6s ease;
+    pointer-events:none;
+  }
+  .mascot{
+    width: 132px;
+    height: 108px;
+    position:relative;
+    z-index:1;
+  }
+  .mascot .vent{
+    position:absolute;
+    top:-10px;
+    width: 30px;
+    height: 30px;
+    border-radius:50%;
+    background: var(--face-soft, var(--mild-soft));
+    transition: background 0.5s ease;
+  }
+  .mascot .vent.left{ left: 6px; }
+  .mascot .vent.right{ right: 6px; }
+  .mascot .body{
+    position:absolute;
+    top: 12px; left:0; right:0; bottom:0;
+    background: var(--face-soft, var(--mild-soft));
+    border-radius: 28px;
+    transition: background 0.5s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .mascot .face{ width: 84px; height: 60px; position:relative; }
+  .mascot .eye{
+    position:absolute; top: 10px; width: 12px; height: 14px;
+    background: var(--ink); border-radius: 6px;
+  }
+  .mascot .eye.l{ left: 12px; }
+  .mascot .eye.r{ right: 12px; }
+  .mascot .mouth{
+    position:absolute; left:50%; top: 32px; transform: translateX(-50%);
+    width: 30px; height: 16px;
+  }
+  .mascot .sweat{
+    position:absolute; right: 4px; top: 2px;
+    width: 9px; height: 13px;
+    background: var(--cold);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(45deg);
+    opacity:0;
+    transition: opacity 0.4s ease;
+  }
+  .state-hot .sweat{ opacity:1; }
+  .state-cold .eye{ height: 3px; top: 16px; border-radius: 2px; }
+  .state-hot .eye{ border-radius: 50%; }
+
+  .temp-readout{
+    font-family:'Jua', sans-serif;
+    font-size: 56px;
+    line-height: 1;
+    margin-top: 4px;
+    display:flex;
+    align-items:flex-start;
+    gap: 2px;
+    z-index:1;
+  }
+  .temp-readout span.unit{ font-size: 22px; margin-top: 6px; color: var(--ink-soft); }
+  .temp-caption{ font-size: 13px; color: var(--ink-soft); z-index:1; }
+
+  .gauge{
+    width: 100%;
+    max-width: 320px;
+    height: 10px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--cold), var(--mild), var(--hot));
+    position:relative;
+    margin-top: 6px;
+    z-index:1;
+  }
+  .gauge-dot{
+    position:absolute;
+    top:50%;
+    width: 18px; height: 18px;
+    background: var(--card);
+    border: 3px solid var(--ink);
+    border-radius:50%;
+    transform: translate(-50%,-50%);
+    transition: left 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* Roster / number picker */
+  .roster-card{
+    background: var(--card);
+    border-radius: 24px;
+    box-shadow: var(--shadow-sm);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .roster-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 10px;
+  }
+  .roster-head h2{
+    font-family:'Jua', sans-serif;
+    font-weight:400;
+    font-size: 16px;
+    margin:0;
+  }
+  .settings-btn{
+    border:none;
+    background: var(--accent-soft);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 15px;
+    cursor:pointer;
+    color: var(--ink);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .roster-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 8px;
+  }
+  .roster-num{
+    aspect-ratio: 1;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    background: var(--bg-2);
+    color: var(--ink);
+    font-family:'Gowun Dodum', sans-serif;
+    font-size: 13px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .roster-num:active{ transform: scale(0.92); }
+  .roster-num.selected{
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    font-weight: bold;
+    transform: scale(1.08);
+  }
+  .roster-num.voted{
+    background: transparent;
+    color: var(--ink-soft);
+    opacity: 0.45;
+    cursor: default;
+    text-decoration: line-through;
+  }
+  .roster-num.empty{
+    background: transparent;
+    border: none;
+    cursor: default;
+    pointer-events: none;
+  }
+  .roster-hint{
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    text-align:center;
+  }
+  .roster-progress{
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-align:center;
+  }
+
+  /* Vote buttons */
+  .vote-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .vote-btn{
+    border: none;
+    border-radius: 24px;
+    padding: 18px 8px 14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 8px;
+    cursor:pointer;
+    font-family:'Jua', sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .vote-btn:active{ transform: translateY(2px) scale(0.97); }
+  .vote-btn.cold{ background: var(--cold-soft); }
+  .vote-btn.mild{ background: var(--mild-soft); }
+  .vote-btn.hot{ background: var(--hot-soft); }
+  .vote-btn svg{ width: 34px; height: 34px; }
+  .vote-btn .count{
+    font-family:'Gowun Dodum', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--card);
+    padding: 2px 10px;
+    border-radius: 999px;
+  }
+  .vote-btn.bump{ animation: bump 0.35s ease; }
+  @keyframes bump{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.08); }
+    100%{ transform: scale(1); }
+  }
+
+  .apply-row{
+    display:flex;
+    justify-content:center;
+    margin-bottom: 10px;
+  }
+  .apply-btn{
+    font-family:'Jua', sans-serif;
+    font-size: 16px;
+    color: #5B4A18;
+    background: var(--accent);
+    border:none;
+    border-radius: 999px;
+    padding: 14px 30px;
+    cursor:pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease;
+  }
+  .apply-btn:active{ transform: scale(0.97); }
+
+  .toast{
+    text-align:center;
+    font-size: 14px;
+    color: var(--ink-soft);
+    min-height: 20px;
+    margin-bottom: 18px;
+    transition: opacity 0.3s ease;
+  }
+
+  /* History */
+  .history{
+    background: var(--card);
+    border-radius: 24px;
+    box-shadow: var(--shadow-sm);
+    padding: 18px 18px 8px;
+  }
+  .history h2{
+    font-family:'Jua', sans-serif;
+    font-weight:400;
+    font-size: 17px;
+    margin: 0 0 10px;
+  }
+  .history-empty{
+    color: var(--ink-soft);
+    font-size: 14px;
+    padding: 6px 0 16px;
+    text-align:center;
+  }
+  .history-item{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--bg-2);
+    font-size: 13.5px;
+  }
+  .history-item:first-child{ border-top:none; }
+  .history-badge{
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .history-badge svg{ width:15px; height:15px; }
+  .history-badge.cold{ background: var(--cold-soft); }
+  .history-badge.mild{ background: var(--mild-soft); }
+  .history-badge.hot{ background: var(--hot-soft); }
+  .history-text{ flex:1; color: var(--ink); }
+  .history-time{ color: var(--ink-soft); font-size: 12px; flex-shrink:0; }
+
+  .reset-row{ text-align:center; margin-top: 18px; }
+  .reset-link{
+    background:none; border:none; color: var(--ink-soft);
+    font-size: 12.5px; text-decoration: underline; cursor:pointer;
+    font-family:'Gowun Dodum', sans-serif;
+  }
+
+  @media (max-width: 380px){
+    .vote-btn{ font-size: 14px; padding: 14px 4px 10px; }
+    .vote-btn svg{ width: 28px; height: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>온도주권</h1>
+    <p>쉬는 시간마다 지금 느끼는 온도를 눌러주세요</p>
+  </header>
+
+  <div class="mascot-card" id="mascotCard">
+    <div class="mascot-glow" id="mascotGlow"></div>
+    <div class="mascot" id="mascot">
+      <div class="vent left"></div>
+      <div class="vent right"></div>
+      <div class="body">
+        <div class="face">
+          <div class="eye l"></div>
+          <div class="eye r"></div>
+          <svg class="mouth" viewBox="0 0 30 16"><path id="mouthPath" d="M4 4 Q15 16 26 4" fill="none" stroke="#4A4458" stroke-width="3" stroke-linecap="round"/></svg>
+          <div class="sweat"></div>
+        </div>
+      </div>
+    </div>
+    <div class="temp-readout"><span id="tempValue">24</span><span class="unit">°C</span></div>
+    <div class="temp-caption" id="tempCaption">에어컨이 딱 맞게 맞춰져 있어요</div>
+    <div class="gauge">
+      <div class="gauge-dot" id="gaugeDot"></div>
+    </div>
+  </div>
+
+  <div class="roster-card">
+    <div class="roster-head">
+      <h2>내 자리를 선택하세요</h2>
+    </div>
+    <div class="roster-grid" id="rosterGrid"></div>
+    <div class="roster-hint" id="rosterHint">번호를 누른 다음, 아래에서 지금 느끼는 온도를 골라주세요</div>
+    <div class="roster-progress" id="rosterProgress"></div>
+  </div>
+
+  <div class="vote-row">
+    <button class="vote-btn cold" data-key="cold" id="btnCold">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M20 4v32M9 11l22 18M31 11L9 29" stroke="#5FB8DE" stroke-width="3.5" stroke-linecap="round"/><path d="M20 4l-4 4m4-4l4 4M20 36l-4-4m4 4l4-4M9 11l5 1m-5-1l1-5M31 11l-5 1m5-1l-1-5M9 29l5-1m-5 1l1 5M31 29l-5-1m5 1l-1 5" stroke="#5FB8DE" stroke-width="2.5" stroke-linecap="round"/></svg>
+      춥다
+      <span class="count" id="countCold">0명</span>
+    </button>
+    <button class="vote-btn mild" data-key="mild" id="btnMild">
+      <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="15" stroke="#4FBE8B" stroke-width="3.5"/><path d="M13 21c2 3 5 4.5 7 4.5s5-1.5 7-4.5" stroke="#4FBE8B" stroke-width="3" stroke-linecap="round"/><circle cx="14.5" cy="16" r="2" fill="#4FBE8B"/><circle cx="25.5" cy="16" r="2" fill="#4FBE8B"/></svg>
+      적절하다
+      <span class="count" id="countMild">0명</span>
+    </button>
+    <button class="vote-btn hot" data-key="hot" id="btnHot">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M20 5c-1 6-8 9-8 17a8 8 0 0016 0c0-3-1.5-5-3-6.5 0 3-1.5 4.5-3 4.5-2 0-3-1.7-3-4 0-3.5 2-6 1-11z" stroke="#FF7A57" stroke-width="3" stroke-linejoin="round" fill="none"/></svg>
+      덥다
+      <span class="count" id="countHot">0명</span>
+    </button>
+  </div>
+
+  <div class="apply-row">
+    <button class="apply-btn" id="applyBtn">결과 반영하고 새 투표 시작</button>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <div class="history">
+    <h2>지난 쉬는 시간 기록</h2>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="reset-row">
+    <button class="reset-link" id="resetAllBtn">전체 기록 초기화</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'class-temp-vote-state-v1';
+  const MIN_TEMP = 18, MAX_TEMP = 28, DEFAULT_TEMP = 24;
+
+  // Real classroom seat layout, from the teacher's seating chart.
+  // Each row is a physical row of desks (facing the board); null = empty/no desk.
+  const SEAT_LAYOUT = [
+    [32, 17, 12, 6, 34, 24],
+    [4, 1, 27, 33, 18, 2],
+    [16, 14, 15, 11, 3, 28],
+    [9, 5, 21, 31, 29, 19],
+    [13, 30, 10, 20, 8, 22],
+    [null, 26, 7, 25, null, null]
+  ];
+  const SEAT_NUMBERS = SEAT_LAYOUT.flat().filter(function(n){ return n !== null; });
+  const LAYOUT_SIGNATURE = SEAT_NUMBERS.join(',');
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) throw new Error('empty');
+      const parsed = JSON.parse(raw);
+      if(typeof parsed.temp !== 'number' || !Array.isArray(parsed.history)) throw new Error('bad shape');
+      if(parsed.layoutSignature !== LAYOUT_SIGNATURE){
+        // seat layout changed (or first time) - keep temp/history, start a fresh round
+        parsed.layoutSignature = LAYOUT_SIGNATURE;
+        parsed.votes = { cold: 0, mild: 0, hot: 0 };
+        parsed.votedSeats = {};
+      }
+      return parsed;
+    }catch(e){
+      return { temp: DEFAULT_TEMP, history: [], votes: {cold:0, mild:0, hot:0}, votedSeats: {}, layoutSignature: LAYOUT_SIGNATURE };
+    }
+  }
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ /* storage unavailable: continue with in-memory state only */ }
+  }
+
+  let state = loadState();
+  if(!state.votes) state.votes = {cold:0, mild:0, hot:0};
+  if(!state.votedSeats) state.votedSeats = {};
+  let selectedNumber = null;
+
+  const tempValue = document.getElementById('tempValue');
+  const tempCaption = document.getElementById('tempCaption');
+  const gaugeDot = document.getElementById('gaugeDot');
+  const mascot = document.getElementById('mascot');
+  const mascotCard = document.getElementById('mascotCard');
+  const mascotGlow = document.getElementById('mascotGlow');
+  const mouthPath = document.getElementById('mouthPath');
+  const toast = document.getElementById('toast');
+  const historyList = document.getElementById('historyList');
+
+  const countEls = { cold: document.getElementById('countCold'), mild: document.getElementById('countMild'), hot: document.getElementById('countHot') };
+  const btnEls = { cold: document.getElementById('btnCold'), mild: document.getElementById('btnMild'), hot: document.getElementById('btnHot') };
+  const rosterGrid = document.getElementById('rosterGrid');
+  const rosterHint = document.getElementById('rosterHint');
+  const rosterProgress = document.getElementById('rosterProgress');
+
+  const DEFAULT_HINT = '내 자리를 누른 다음, 아래에서 지금 느끼는 온도를 골라주세요';
+
+  rosterGrid.style.gridTemplateColumns = 'repeat(' + SEAT_LAYOUT[0].length + ', 1fr)';
+
+  function renderRoster(){
+    rosterGrid.innerHTML = '';
+    SEAT_LAYOUT.forEach(function(row){
+      row.forEach(function(num){
+        if(num === null){
+          const spacer = document.createElement('div');
+          spacer.className = 'roster-num empty';
+          rosterGrid.appendChild(spacer);
+          return;
+        }
+        const voted = !!state.votedSeats[num];
+        const btn = document.createElement('button');
+        btn.className = 'roster-num' + (voted ? ' voted' : '') + (selectedNumber === num ? ' selected' : '');
+        btn.textContent = num;
+        btn.type = 'button';
+        if(voted){
+          btn.disabled = true;
+        } else {
+          btn.addEventListener('click', function(){
+            selectedNumber = (selectedNumber === num) ? null : num;
+            renderRoster();
+          });
+        }
+        rosterGrid.appendChild(btn);
+      });
+    });
+    rosterHint.textContent = selectedNumber
+      ? (selectedNumber + '번 선택됨 — 지금 느끼는 온도를 골라주세요')
+      : DEFAULT_HINT;
+    const votedCount = Object.keys(state.votedSeats).filter(function(k){ return state.votedSeats[k]; }).length;
+    const required = Math.floor(SEAT_NUMBERS.length / 2) + 1;
+    rosterProgress.textContent = '투표 완료 ' + votedCount + ' / ' + SEAT_NUMBERS.length + '자리 (반영하려면 최소 ' + required + '명 필요)';
+  }
+
+  const soft = { cold: 'var(--cold-soft)', mild: 'var(--mild-soft)', hot: 'var(--hot-soft)' };
+  const glow = { cold: '#8FD4EE', mild: '#8BDDB0', hot: '#FF9E86' };
+  const mouths = {
+    cold: 'M8 8 Q15 4 22 8',
+    mild: 'M4 4 Q15 16 26 4',
+    hot: 'M6 5 Q15 14 24 5 Q15 12 6 5'
+  };
+  const captions = {
+    cold: '조금 쌀쌀하다는 의견이 많았어요',
+    mild: '지금 온도가 딱 좋대요',
+    hot: '조금 덥다는 의견이 많았어요',
+    tie: '의견이 팽팽해서 온도는 그대로 유지해요'
+  };
+
+  function renderMascot(mood){
+    mascot.className = 'mascot' + (mood ? ' state-' + mood : '');
+    const key = mood || 'mild';
+    mascotCard.style.setProperty('--face-soft', soft[key]);
+    mascotGlow.style.background = glow[key];
+    mouthPath.setAttribute('d', mouths[key]);
+  }
+
+  function renderTemp(){
+    tempValue.textContent = state.temp;
+    const pct = (state.temp - MIN_TEMP) / (MAX_TEMP - MIN_TEMP);
+    gaugeDot.style.left = (pct * 100) + '%';
+    if(state.temp <= 21) renderMascot('cold');
+    else if(state.temp >= 27) renderMascot('hot');
+    else renderMascot('mild');
+  }
+
+  function renderCounts(){
+    countEls.cold.textContent = state.votes.cold + '명';
+    countEls.mild.textContent = state.votes.mild + '명';
+    countEls.hot.textContent = state.votes.hot + '명';
+  }
+
+  function renderHistory(){
+    if(state.history.length === 0){
+      historyList.innerHTML = '<div class="history-empty">아직 기록이 없어요. 첫 투표를 진행해보세요!</div>';
+      return;
+    }
+    historyList.innerHTML = state.history.slice(0, 10).map(function(item){
+      const icons = {
+        cold: '<svg viewBox="0 0 40 40"><path d="M20 4v32M9 11l22 18M31 11L9 29" stroke="#5FB8DE" stroke-width="4" stroke-linecap="round"/></svg>',
+        mild: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" stroke="#4FBE8B" stroke-width="4" fill="none"/></svg>',
+        hot: '<svg viewBox="0 0 40 40"><path d="M20 5c-1 6-8 9-8 17a8 8 0 0016 0c0-3-1.5-5-3-6.5 0 3-1.5 4.5-3 4.5-2 0-3-1.7-3-4 0-3.5 2-6 1-11z" stroke="#FF7A57" stroke-width="4" fill="none"/></svg>',
+        tie: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" stroke="#B7AEC7" stroke-width="4" fill="none"/></svg>'
+      };
+      const badgeClass = item.result === 'tie' ? '' : item.result;
+      return '<div class="history-item">' +
+        '<div class="history-badge ' + badgeClass + '">' + icons[item.result] + '</div>' +
+        '<div class="history-text">' + item.label + '</div>' +
+        '<div class="history-time">' + item.time + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAll(){ renderTemp(); renderCounts(); renderHistory(); renderRoster(); }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+  }
+
+  Object.keys(btnEls).forEach(function(key){
+    btnEls[key].addEventListener('click', function(){
+      if(selectedNumber === null){
+        showToast('먼저 위에서 내 자리를 선택해주세요!');
+        return;
+      }
+      if(state.votedSeats[selectedNumber]){
+        showToast(selectedNumber + '번은 이미 이번 쉬는 시간에 투표했어요');
+        selectedNumber = null;
+        renderRoster();
+        return;
+      }
+      state.votes[key] += 1;
+      state.votedSeats[selectedNumber] = true;
+      const votedNum = selectedNumber;
+      selectedNumber = null;
+      saveState();
+      renderCounts();
+      renderRoster();
+      btnEls[key].classList.remove('bump');
+      void btnEls[key].offsetWidth;
+      btnEls[key].classList.add('bump');
+      showToast(votedNum + '번 투표 완료!');
+    });
+  });
+
+  document.getElementById('applyBtn').addEventListener('click', function(){
+    const v = state.votes;
+    const total = v.cold + v.mild + v.hot;
+    const required = Math.floor(SEAT_NUMBERS.length / 2) + 1;
+    if(total < required){
+      showToast('과반수(최소 ' + required + '명)가 투표해야 반영돼요. 지금은 ' + total + '명 투표했어요.');
+      return;
+    }
+    const maxCount = Math.max(v.cold, v.mild, v.hot);
+    const winners = Object.keys(v).filter(function(k){ return v[k] === maxCount; });
+
+    let result, before = state.temp, after = state.temp, label;
+    if(winners.length > 1){
+      result = 'tie';
+      after = before;
+      label = '춥다 ' + v.cold + '명 · 적절하다 ' + v.mild + '명 · 덥다 ' + v.hot + '명 — 의견이 비슷해 ' + before + '°C 유지';
+      showToast(captions.tie);
+    } else {
+      result = winners[0];
+      if(result === 'cold') after = Math.min(MAX_TEMP, before + 1);
+      else if(result === 'hot') after = Math.max(MIN_TEMP, before - 1);
+      else after = before;
+      const changeText = after === before ? (before + '°C 유지') : (before + '°C → ' + after + '°C');
+      label = '춥다 ' + v.cold + '명 · 적절하다 ' + v.mild + '명 · 덥다 ' + v.hot + '명 — ' + changeText;
+      showToast(captions[result]);
+    }
+
+    const now = new Date();
+    const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    state.history.unshift({ time: time, label: label, result: result });
+    state.temp = after;
+    state.votes = { cold: 0, mild: 0, hot: 0 };
+    state.votedSeats = {};
+    selectedNumber = null;
+    saveState();
+    renderAll();
+  });
+
+  document.getElementById('resetAllBtn').addEventListener('click', function(){
+    if(!confirm('온도와 기록을 모두 초기화할까요?')) return;
+    state = { temp: DEFAULT_TEMP, history: [], votes: {cold:0, mild:0, hot:0}, votedSeats: {}, layoutSignature: LAYOUT_SIGNATURE };
+    selectedNumber = null;
+    saveState();
+    renderAll();
+    showToast('처음 상태로 초기화했어요');
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
